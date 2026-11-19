@@ -1,0 +1,32 @@
+# Local development / Unraid Compose Manager Plus. Set variables in .env.
+name: scum-server
+services:
+  scum:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    image: scum-unraid:release-candidate-local
+    container_name: scum-server
+    restart: unless-stopped
+    stop_grace_period: 150s
+    environment:
+      TZ: ${TZ:-Australia/Adelaide}
+      GAME_PORT: ${GAME_PORT:-7777}
+      MAX_PLAYERS: ${MAX_PLAYERS:-10}
+      UPDATE_ON_START: ${UPDATE_ON_START:-true}
+      STEAMCMD_VALIDATE: ${STEAMCMD_VALIDATE:-false}
+      SHUTDOWN_TIMEOUT: ${SHUTDOWN_TIMEOUT:-120}
+      SFTP_PASSWORD: ${SFTP_PASSWORD:?Set SFTP_PASSWORD in .env}
+      MANAGER_TOKEN: ${MANAGER_TOKEN:?Set MANAGER_TOKEN in .env}
+    ports:
+      - '7777:7777/udp'
+      - '7778:7778/udp'
+      - '7779:7779/udp'
+      - '7779:7779/tcp'
+      - '${SFTP_HOST_PORT:-2222}:2222/tcp'
+      - '${WEB_BIND_IP:-127.0.0.1}:${WEB_HOST_PORT:-8383}:8080/tcp'
+    volumes:
+      - ${SCUM_APPDATA:-/mnt/user/appdata/scum-server}:/data
+    labels:
+      net.unraid.docker.managed: 'composeman'
+      net.unraid.docker.shell: '/bin/bash'

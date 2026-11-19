@@ -1,0 +1,12 @@
+.env
+*.zip
+.git
+.github
+tests
+__pycache__
+*.pyc
+*.db
+*.db-wal
+*.db-shm
+backups
+logs

@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SCUM Server Manager</title>
+<style>
+:root{color-scheme:dark;font:15px system-ui,sans-serif;background:#101721;color:#eaf0f7}body{max-width:1100px;margin:0 auto;padding:24px 18px}h1{margin:0;font-size:26px}p,small{color:#b0bfd0}main{display:grid;gap:14px}.panel{background:#192330;border:1px solid #33485d;border-radius:12px;padding:18px}header{margin-bottom:20px}button,input,select{font:inherit;border-radius:7px;padding:10px;border:1px solid #58718a;background:#273c51;color:white;max-width:100%}button{cursor:pointer}button:hover{background:#365371}button:disabled{opacity:.45}input{min-width:160px}.controls{display:flex;flex-wrap:wrap;gap:9px;align-items:center}.data{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px}.value{font-weight:700;font-size:20px}pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#0b121a;padding:12px;border-radius:8px;max-height:320px;overflow:auto;font:12px ui-monospace,monospace}.muted{color:#aab7c8}.warning{color:#ffd29b}#error{color:#ffab9a}label{display:flex;gap:7px;align-items:center}.user{border-top:1px solid #33485d;padding:12px 0;display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px}body:not(.admin) #userAdmin{display:none}body:not(.logged-in) .requires-login{display:none}body:not(.user-login) #selfPassword{display:none}
+
+button{transition:background .12s ease,transform .08s ease,opacity .12s ease}
+button:active:not(:disabled){transform:translateY(1px);background:#456988}
+button.busy{cursor:progress;opacity:.75}
+button.busy::after{content:' …';display:inline-block;animation:pulse .9s infinite alternate}
+@keyframes pulse{from{opacity:.2}to{opacity:1}}
+#notice{color:#a9efd0;min-height:1.4em}
+#identityBar{display:flex;flex-wrap:wrap;align-items:center;justify-content:flex-start;gap:14px;margin-top:12px}
+#identity{margin:0}
+#logout{display:none}
+body.logged-in #logout{display:inline-flex}
+body.logged-in #loginControls{display:none}
+#newSftp{width:18px;height:18px;min-width:18px;margin:0;accent-color:#75b4ee}
+.check-option{display:inline-flex;align-items:center;gap:8px;white-space:nowrap;padding:0 6px;min-height:42px;cursor:pointer}
+.check-option input{padding:0;flex:0 0 18px}
+#userAdmin .controls{align-items:center}
+#newName,#newPassword{flex:1 1 205px;min-width:175px}
+#actionStatus{min-height:1.2em;margin:.5em 0;color:#a9efd0}
+</style></head><body>
+<header><h1>SCUM Server Manager</h1><p>Phase 2.4.1 · Unified web and SFTP users · Unraid/Wine</p><small>Remote access requires a trusted VPN or HTTPS reverse proxy; do not expose this HTTP port directly.</small></header>
+<main>
+<section class="panel"><h2>Access</h2>
+<div id="loginControls">
+<div class="controls"><input id="loginName" autocomplete="username" placeholder="Panel username"><input id="loginPassword" type="password" autocomplete="current-password" placeholder="Panel password"><button id="userLogin">User sign in</button></div>
+<p class="muted">Or sign in as administrator using the master token:</p>
+<div class="controls"><input id="token" type="password" autocomplete="off" placeholder="MANAGER_TOKEN"><button id="adminLogin">Administrator sign in</button></div>
+</div>
+<div id="identityBar"><p id="identity" class="muted">Not signed in</p><button id="logout" type="button">Sign out</button></div>
+<p id="notice" role="status" aria-live="polite"></p><p id="error" role="alert" aria-live="assertive"></p></section>
+<section class="panel requires-login"><h2>Server status</h2><div class="data"><div><div class="muted">Phase</div><div class="value" id="phase">—</div></div><div><div class="muted">Game wrapper PID</div><div class="value" id="pid">—</div></div><div><div class="muted">Last action</div><div class="value" id="action">—</div></div><div><div class="muted">Supervisor uptime</div><div class="value" id="supervisorUptime">—</div></div><div><div class="muted">Game uptime</div><div class="value" id="gameUptime">—</div></div></div><p id="lastError" class="warning"></p></section>
+<section class="panel requires-login"><h2>SCUM controls</h2><div class="controls"><button data-action="start">Start game</button><button data-action="stop">Stop game</button><button data-action="restart">Restart game</button><button data-action="update">Update via SteamCMD</button></div><p class="warning">Disruptive operations use the existing graceful Ctrl+C process. Stop/update only with players disconnected.</p></section>
+<section class="panel requires-login"><h2>Lifecycle history</h2><pre id="history">No exits recorded.</pre></section>
+<section class="panel requires-login"><h2>SFTP information</h2><p>TCP port: 2222 · Default chroot: <code>/data</code> · Start directory: <code>/game</code></p><p id="fingerprint" class="muted">—</p><p class="muted">Panel users use their panel username/password for SFTP. The original <code>scum</code> SFTP account remains available for compatibility.</p></section>
+<section class="panel requires-login" id="selfPassword"><h2>Change my password</h2><p class="muted">Updates both web and SFTP credentials, and signs you out.</p><div class="controls"><input type="password" id="oldPassword" autocomplete="current-password" placeholder="Current password"><input type="password" id="ownPassword" autocomplete="new-password" placeholder="New password (16+ characters)"><button id="changeOwn">Change password</button></div></section>
+<section class="panel requires-login" id="userAdmin"><h2>User administration</h2><p class="muted">Master token only. Every new panel account can also have SFTP access. Users cannot administer other users.</p>
+<h3>Create user</h3><div class="controls"><input id="newName" placeholder="Username (lowercase)" autocomplete="off"><input id="newPassword" type="password" placeholder="Password (16+ characters)" autocomplete="new-password"><label class="check-option" for="newSftp"><input id="newSftp" type="checkbox" checked><span>SFTP access</span></label><button id="createUser">Create user</button></div>
+<p id="actionStatus" role="status" aria-live="polite"></p><h3>Existing users</h3><div id="users">No users created.</div></section>
+<section class="panel requires-login"><h2>Supervisor log</h2><pre id="log">—</pre><button id="refresh">Refresh now</button></section>
+</main>
+<script>
+(()=>{'use strict';
+let token='',role='',currentUser='',timer=null,generation=0,activeOps=0;
+const $=id=>document.getElementById(id);
+const text=(id,v)=>{$(id).textContent=v??'—'};
+const err=v=>text('error',v||'');
+const notice=v=>text('notice',v||'');
+const actionStatus=v=>text('actionStatus',v||'');
+function duration(sec){if(sec===null||sec===undefined)return '—';const h=Math.floor(sec/3600),m=Math.floor((sec%3600)/60),s=Math.floor(sec%60);return `${h}h ${m}m ${s}s`}
+function authError(e){return e.status===401||e.status===403}
+async function req(path,method='GET',data){
+ const headers={'X-SCUM-Request':'1'};
+ if(token)headers.Authorization='Bearer '+token;
+ if(data!==undefined)headers['Content-Type']='application/json';
+ let res;
+ try{res=await fetch(path,{method,headers,body:data===undefined?undefined:JSON.stringify(data),credentials:'same-origin',cache:'no-store'})}
+ catch(e){throw Error('Network request failed. Check the dashboard connection.')}
+ const obj=await res.json().catch(()=>({}));
+ if(!res.ok){const e=new Error(obj.error||`HTTP ${res.status}`);e.status=res.status;throw e}
+ return obj;
+}
+function updateLogin(username,admin){
+ generation++;role=admin?'admin':'user';currentUser=username;
+ document.body.classList.add('logged-in');document.body.classList.toggle('admin',admin);document.body.classList.toggle('user-login',!admin);
+ text('identity','Signed in as '+username+(admin?' (administrator)':''));
+ if(timer)clearInterval(timer);
+ timer=setInterval(()=>refresh(true),5000);
+}
+function clearLogin(){
+ generation++;token='';role='';currentUser='';
+ document.body.classList.remove('logged-in','admin','user-login');text('identity','Not signed in');
+ if(timer)clearInterval(timer);timer=null;
+}
+async function refresh(quiet=false){
+ if(!role)return;
+ const currentGeneration=generation;
+ try{
+  const [state,logs,sftp]=await Promise.all([req('/api/status'),req('/api/logs?limit=150'),req('/api/sftp')]);
+  if(currentGeneration!==generation)return;
+  text('phase',state.phase);text('pid',state.game_pid);text('action',state.last_action);
+  text('lastError',state.last_error||'');text('supervisorUptime',duration(state.supervisor_uptime_seconds));text('gameUptime',duration(state.game_uptime_seconds));
+  text('history',(state.recent_exits||[]).map(x=>`${x.at} | ${x.reason} | exit ${x.exit_code} | ${duration(x.duration_seconds)}`).join('\n')||'No lifecycle events.');
+  text('log',(logs.lines||[]).join('\n'));text('fingerprint','Host key: '+(sftp.host_key_fingerprint||'Not available'));
+  if(role==='admin' && activeOps===0)await refreshUsers(currentGeneration);
+  if(!quiet)err('');
+ }catch(e){
+  if(currentGeneration!==generation)return;
+  if(authError(e)){
+   clearLogin();err('');notice('Your session expired or access was revoked. Please sign in again.');
+  }else if(!quiet){err(e.message)}
+ }
+}
+async function refreshUsers(currentGeneration=generation){
+ const result=await req('/api/users');
+ if(currentGeneration!==generation)return;
+ const target=$('users');target.replaceChildren();
+ if(!result.users.length){text('users','No panel users yet.');return}
+ for(const user of result.users){
+  const row=document.createElement('div');row.className='user';
+  const name=document.createElement('strong');name.textContent=user.username;row.append(name);
+  const info=document.createElement('span');info.textContent=`Web: ${user.enabled?'enabled':'disabled'} · SFTP: ${user.sftp_enabled?'enabled':'disabled'}`;row.append(info);
+  const actions=document.createElement('div');actions.className='controls';
+  const mk=(label,fn)=>{const b=document.createElement('button');b.type='button';b.textContent=label;b.onclick=()=>operation(b,fn,label);actions.append(b)};
+  mk(user.enabled?'Disable':'Enable',async()=>{if(!confirm(`${user.enabled?'Disable':'Enable'} ${user.username}?`))return null;return req('/api/users/modify','POST',{username:user.username,enabled:!user.enabled})});
+  mk(user.sftp_enabled?'Disable SFTP':'Enable SFTP',()=>req('/api/users/modify','POST',{username:user.username,sftp_enabled:!user.sftp_enabled}));
+  mk('Reset password',async()=>{const pw=prompt(`Enter a new password for ${user.username} (16–72 characters)`);if(pw===null)return null;return req('/api/users/password','POST',{username:user.username,password:pw})});
+  mk('Delete',async()=>{if(!confirm(`Delete account ${user.username}? Game files are preserved.`))return null;return req('/api/users/delete','POST',{username:user.username})});
+  row.append(actions);target.append(row);
+ }
+}
+async function withBusy(button,work){
+ if(button.disabled)return;
+ button.disabled=true;button.classList.add('busy');
+ const old=button.textContent;button.textContent=old+' — working';
+ activeOps++;
+ try{return await work()}finally{button.textContent=old;button.classList.remove('busy');button.disabled=false;activeOps--}
+}
+async function operation(button,fn,label){
+ return withBusy(button,async()=>{
+  err('');actionStatus(`${label}: processing…`);
+  try{
+   const result=await fn();
+   if(result===null){actionStatus('');return}
+   actionStatus(`${label}: completed successfully.`);
+   await refresh(true);
+  }catch(e){if(authError(e)){clearLogin();notice('Your session expired. Please sign in again.');actionStatus(`${label}: session expired.`)}else{actionStatus(`${label}: ${e.message}`);err(e.message)}}
+ });
+}
+$('adminLogin').onclick=async()=>withBusy($('adminLogin'),async()=>{
+ token=$('token').value;$('token').value='';notice('');err('');
+ try{const me=await req('/api/me');if(!me.administrator)throw Error('Administrator token required');updateLogin(me.username,true);await refresh()}
+ catch(e){clearLogin();err(e.message)}
+});
+$('userLogin').onclick=async()=>withBusy($('userLogin'),async()=>{
+ token='';err('');notice('');
+ try{const me=await req('/api/login','POST',{username:$('loginName').value,password:$('loginPassword').value});$('loginPassword').value='';updateLogin(me.username,false);await refresh()}
+ catch(e){$('loginPassword').value='';clearLogin();err(e.message)}
+});
+$('logout').onclick=async()=>withBusy($('logout'),async()=>{
+ try{await req('/api/logout','POST')}catch(e){}
+ clearLogin();err('');notice('Signed out.');
+});
+$('createUser').onclick=async()=>operation($('createUser'),async()=>{
+ const username=$('newName').value.trim();const password=$('newPassword').value;
+ if(!username||!password)throw Error('Enter a username and password.');
+ const result=await req('/api/users','POST',{username,password,sftp_enabled:$('newSftp').checked});
+ $('newPassword').value='';$('newName').value='';
+ return result;
+},'Create user');
+$('changeOwn').onclick=async()=>withBusy($('changeOwn'),async()=>{
+ err('');notice('Changing your web and SFTP password…');
+ try{
+  const result=await req('/api/me/password','POST',{current_password:$('oldPassword').value,new_password:$('ownPassword').value});
+  $('oldPassword').value='';$('ownPassword').value='';
+  if(result.login_required){clearLogin();err('');notice('Password changed successfully. Your previous session has ended. Sign in with your new password.');}
+  else notice('Password changed successfully.');
+ }catch(e){err(e.message);notice('')}
+});
+$('refresh').onclick=()=>refresh(false);
+document.querySelectorAll('[data-action]').forEach(btn=>btn.onclick=async()=>{
+ const act=btn.dataset.action;
+ if(!confirm(`Request SCUM ${act}? Ensure players are disconnected before disruptive actions.`))return;
+ await operation(btn,()=>req('/api/actions/'+act,'POST',{}),act);
+});
+// Restore the user's HttpOnly cookie session on a hard refresh without retaining credentials in browser storage.
+req('/api/me').then(me=>{if(!role){updateLogin(me.username,me.administrator);refresh()}}).catch(()=>{});
+})();
+</script></body></html>
