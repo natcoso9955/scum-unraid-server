@@ -1,6 +1,6 @@
-# SCUM Dedicated Server for Unraid — release candidate source
+# SCUM Dedicated Server for Unraid
 
-This is a **pre-publication release candidate**, assembled from the Phase 2.4 server source and Phase 2.4.1 UI update. Field testing was performed by the project owner on Unraid 7; this assembled candidate has **not** been run through a complete Docker build or SCUM runtime test. Windows SCUM server runs under Wine; platform compatibility is community-supported. The final cosmetic Sign Out alignment change and basic Docker HEALTHCHECK are included here but have not yet been field-tested.
+Community-maintained SCUM dedicated server for Unraid 7. The v0.1.0-rc1 image is a release candidate; standalone Unraid template installation and runtime validation are still required.
 
 ## Capabilities
 - SteamCMD installation/update (app `3792580`), optional `STEAMCMD_VALIDATE`
@@ -12,7 +12,7 @@ This is a **pre-publication release candidate**, assembled from the Phase 2.4 se
 - No custom backup/scheduler/restore feature (SCUM's native backups remain)
 
 ## Important
-- For public release, **review SECURITY.md**, choose a licence, replace publishing placeholders, and validate the Unraid template in Community Apps.
+- Licensed under MIT. Review [SECURITY.md](SECURITY.md) before exposing management services remotely. Validate the Unraid template before submitting it to Community Applications.
 - `MANAGER_TOKEN` and `SFTP_PASSWORD` are mandatory on first run. Do not publish the web dashboard on plain HTTP over the internet. TLS reverse proxy/VPN required for remote web use.
 - Existing SFTP users can modify game files, so grant access only to trusted people.
 - The web manager process being up is **not proof** that the game is joinable.
@@ -20,6 +20,6 @@ This is a **pre-publication release candidate**, assembled from the Phase 2.4 se
 - No official SCUM affiliation.
 
 ## Deployment
-For your *existing* working Unraid project, DO NOT overwrite your `.env` or `docker-compose.yml` with these generic examples. Review `docs/RELEASE-STEPS.md` for a separate, complete release workflow.
+For installation and publishing guidance, see [RELEASE-RUNBOOK.md](RELEASE-RUNBOOK.md). For existing installations, preserve the current `/data` mapping and credentials; do not overwrite working `.env` or Compose configuration with generic examples.
 
 Local source test: `docker compose -f docker-compose.yml config --quiet`, then `docker compose -f docker-compose.yml build scum`.

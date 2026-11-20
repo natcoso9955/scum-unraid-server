@@ -15,7 +15,7 @@
   <ExtraParams>--stop-timeout=150</ExtraParams>
   <Category>GameServers:</Category>
   <WebUI>http://[IP]:[PORT:8080]/</WebUI>
-  <TemplateURL>https://raw.githubusercontent.com/natcoso9955/unRAID-docker/main/templates/scum-server.xml</TemplateURL>
+  <TemplateURL>https://raw.githubusercontent.com/natcoso9955/unRAID-docker/master/scum-server.xml</TemplateURL>
   <Config Name="Game Data" Target="/data" Default="/mnt/user/appdata/scum-server" Mode="rw" Description="Persistent installation, world saves, auth, and logs" Type="Path" Display="always" Required="true" Mask="false" />
   <Config Name="Game UDP 7777" Target="7777" Default="7777" Mode="udp" Description="SCUM game UDP" Type="Port" Display="always" Required="true" Mask="false" />
   <Config Name="Game UDP 7778" Target="7778" Default="7778" Mode="udp" Description="SCUM game UDP" Type="Port" Display="always" Required="true" Mask="false" />
