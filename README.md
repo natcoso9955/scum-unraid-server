@@ -1,5 +1,14 @@
 # SCUM Dedicated Server for Unraid
 
+<!-- SCUM BADGES -->
+[![Build](https://github.com/natcoso9955/scum-unraid-server/actions/workflows/dockerhub.yml/badge.svg)](https://github.com/natcoso9955/scum-unraid-server/actions/workflows/dockerhub.yml)
+[![Latest Tag](https://img.shields.io/github/v/tag/natcoso9955/scum-unraid-server?sort=semver&include_prereleases&style=flat-square&label=version)](https://github.com/natcoso9955/scum-unraid-server/tags)
+[![Docker Pulls](https://img.shields.io/docker/pulls/natcoso9955/scum-unraid?style=flat-square&logo=docker&label=Docker%20Pulls)](https://hub.docker.com/r/natcoso9955/scum-unraid)
+[![License](https://img.shields.io/github/license/natcoso9955/scum-unraid-server?style=flat-square)](LICENSE)
+![Platform](https://img.shields.io/badge/platform-linux%2Famd64-blue?style=flat-square&logo=linux)
+![Languages](https://img.shields.io/badge/languages-Python%20%7C%20Shell-3776AB?style=flat-square&logo=python)
+<!-- END SCUM BADGES -->
+
 Community-maintained SCUM dedicated server for Unraid 7. The v0.1.0-rc1 image is a release candidate; standalone Unraid template installation and runtime validation are still required.
 
 ## Capabilities
