@@ -27,6 +27,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: docker/setup-buildx-action@v3
+      - name: Generate Docker image tags
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ secrets.DOCKERHUB_USERNAME }}/scum-unraid
+          flavor: |
+            latest=false
+          tags: |
+            type=ref,event=tag
+            type=raw,value=latest,enable=${{ !contains(github.ref_name, '-') }}
       - name: Docker Hub login
         uses: docker/login-action@v3
         with:
@@ -39,7 +49,7 @@ jobs:
           file: docker/Dockerfile
           platforms: linux/amd64
           push: true
-          tags: |
-            ${{ secrets.DOCKERHUB_USERNAME }}/scum-unraid:${{ github.ref_name }}
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
           provenance: true
           sbom: true

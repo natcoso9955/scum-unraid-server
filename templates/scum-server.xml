@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Container version="2">
   <Name>SCUM Dedicated Server</Name>
-  <Icon>https://raw.githubusercontent.com/natcoso9955/unRAID-docker/master/icons/SCUM-Dedicated-Server-Emblem.png</Icon>
-  <Repository>natcoso9955/scum-unraid:v0.1.0-rc2</Repository>
+  <Icon>https://github.com/natcoso9955/unRAID-docker/raw/refs/heads/master/icons/SCUM-Dedicated-Server-Emblem.png</Icon>
+  <Repository>natcoso9955/scum-unraid:latest</Repository>
   <Registry>https://hub.docker.com/r/natcoso9955/scum-unraid</Registry>
   <Network>bridge</Network>
   <Shell>bash</Shell>
